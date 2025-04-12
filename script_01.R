@@ -1,4 +1,4 @@
-# 1. Importando os dados e salvando em rds. ----------------------------
+# 1. Importando os dados, faxinando e salvando em rds. ----------------------------
 
 library(tidyverse)
 library(readxl)
@@ -20,15 +20,15 @@ desp_mario_maria <- read_excel("raw_data/excel_csv/despesas_mario_maria.xlsx",
     data_02 = format(data, "%y-%m"),
     data_03 = format(data, "%b-%y") # Muda o formato da data.
   ) %>%
-  mutate(data_03 = fct_inorder(data_03)) # Ordena como data.
-
+    # Usa a ordem original quando transforma em fator, por isso, no caso,
+    # mantém a ordem da coluna data_03.
+    mutate(data_03 = fct_inorder(data_03))
+ 
 saveRDS(desp_mario_maria, "raw_data/rds/desp_mario_maria.rds")
 
 
 
 # 2. Calculando o balanço mensal. -----------------------------------------
-
-# Supondo que seu dataframe 'desp_mario_maria' já esteja carregado
 
 # Escolhendo a data espcífica e fazendo o balanço.
 # NÃO ESQUECER DE ATUALIZAR A DATA!!!
@@ -50,7 +50,7 @@ if (diferenca > 0) {
 } else if (diferenca < 0) {
   mensagem <- glue("A Maria deve pagar ao Mário R${abs(diferenca)}")
 } else {
-  mensagem <- "Os gastos de O Mário e A Maria são iguais."
+  mensagem <- "Os gastos de ambos foram iguais. Nimguém paga nada ao outro"
 }
 
 # Exibir a mensagem
@@ -67,14 +67,11 @@ tot_o_mario_data <- desp_mario_maria %>%
   group_by(data_03) %>%
   summarise(tot_mario = sum(tot, na.rm = TRUE))
 
-# Fazendo o gráfico.
+# Fazendo o gráfico de colunas.
 
-# Supondo que seu dataframe 'tot_o_mario_data' já esteja carregado
-
-# Criar o gráfico de colunas
 ggplot(tot_o_mario_data, aes(x = data_03, y = tot_mario)) +
   geom_col(fill = "#E95420", color = "black") + # cor laranja ubuntu
-  labs(title = "Total de Gastos do Mário", x = NULL, y = NULL) +
+  labs(title = "Mário: total de gastos por mês", x = NULL, y = NULL) +
   theme_bw() +
   theme(
     axis.text.x = element_text(size = 8),
@@ -85,7 +82,7 @@ ggplot(tot_o_mario_data, aes(x = data_03, y = tot_mario)) +
     panel.grid.minor.y = element_line(color = "black"), # Remover linhas de grade horizontais secundárias (se houver)
   )
 
-# Calculando agora os totais por mes por rubrica.
+# 4. Calculando agora os totais por mes por rubrica. ----------------------------
 
 tot_o_mario_rubrica_data <- desp_mario_maria %>%
   group_by(data_03, tipo, rubrica) %>%
@@ -100,7 +97,7 @@ ggplot(tot_o_mario_rubrica_data, aes(x = data_03, y = tot_mario_rubrica)) +
   geom_col(fill = "green2", color = "black") + # Cor laranja Ubuntu
   facet_wrap(~rubrica, ncol = 3) + # Criar um gráfico para cada rubrica
   labs(
-    title = "Total de Gastos de O Mário por Rubrica e Data",
+    title = "Mário: total de gastos por rubrica por mês",
     x = NULL,
     y = NULL
   ) +
